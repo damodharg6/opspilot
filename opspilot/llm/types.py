@@ -25,6 +25,9 @@ class ToolCall:
     id: str
     name: str
     arguments: dict[str, Any]
+    # Opaque provider data that must be sent back unchanged with this call, e.g.
+    # Gemini's {"google": {"thought_signature": ...}}. None for most providers.
+    extra_content: dict[str, Any] | None = None
 
 
 @dataclass

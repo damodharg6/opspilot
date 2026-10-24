@@ -23,19 +23,23 @@ RETRYABLE = (
 )
 
 
+def to_openai_tool_call(tc: ToolCall) -> dict[str, Any]:
+    item: dict[str, Any] = {
+        "id": tc.id,
+        "type": "function",
+        "function": {"name": tc.name, "arguments": json.dumps(tc.arguments)},
+    }
+    if tc.extra_content is not None:  # only providers that sent it get it back
+        item["extra_content"] = tc.extra_content
+    return item
+
+
 def to_openai_messages(messages: list[ChatMessage]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for m in messages:
         item: dict[str, Any] = {"role": m.role, "content": m.content}
         if m.tool_calls:
-            item["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {"name": tc.name, "arguments": json.dumps(tc.arguments)},
-                }
-                for tc in m.tool_calls
-            ]
+            item["tool_calls"] = [to_openai_tool_call(tc) for tc in m.tool_calls]
         if m.tool_call_id:
             item["tool_call_id"] = m.tool_call_id
         out.append(item)
@@ -58,6 +62,12 @@ def _parse_arguments(raw: str | None) -> dict[str, Any]:
     except json.JSONDecodeError:
         return {"__invalid_json__": (raw or "")[:500]}
     return value if isinstance(value, dict) else {"__invalid_json__": str(value)[:500]}
+
+
+def _extra_content(tc: Any) -> dict[str, Any] | None:
+    """Non-standard per-call data (Gemini thought signatures); the SDK keeps it in model_extra."""
+    value = (getattr(tc, "model_extra", None) or {}).get("extra_content")
+    return value if isinstance(value, dict) else None
 
 
 class OpenAICompatibleProvider:
@@ -127,7 +137,10 @@ class OpenAICompatibleProvider:
         )
         tool_calls = [
             ToolCall(
-                id=tc.id, name=tc.function.name, arguments=_parse_arguments(tc.function.arguments)
+                id=tc.id,
+                name=tc.function.name,
+                arguments=_parse_arguments(tc.function.arguments),
+                extra_content=_extra_content(tc),
             )
             for tc in (choice.message.tool_calls or [])
         ]

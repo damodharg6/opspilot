@@ -1,10 +1,11 @@
+import copy
 import json
 
 import httpx
 import pytest
 
 from opspilot.llm.openai_compat import OpenAICompatibleProvider
-from opspilot.llm.types import ChatMessage, LLMError
+from opspilot.llm.types import ChatMessage, LLMError, LLMResponse
 
 OK_BODY = {
     "id": "x",
@@ -80,3 +81,57 @@ async def test_gives_up_after_max_retries() -> None:
     with pytest.raises(LLMError, match="unavailable after 3 attempts"):
         await p.complete([ChatMessage(role="user", content="hi")])
     assert len(seen) == 3
+
+
+GEMINI_EXTRA = {"google": {"thought_signature": "c2lnbmF0dXJl"}}
+
+
+def gemini_body() -> dict:
+    body = copy.deepcopy(OK_BODY)
+    body["choices"][0]["message"]["tool_calls"][0]["extra_content"] = GEMINI_EXTRA
+    return body
+
+
+def assistant_turn(resp: LLMResponse) -> list[ChatMessage]:
+    return [
+        ChatMessage(role="user", content="hi"),
+        ChatMessage(role="assistant", content=resp.content, tool_calls=resp.tool_calls),
+        ChatMessage(role="tool", content='{"total": 3}', tool_call_id="call_1"),
+    ]
+
+
+async def test_gemini_thought_signature_is_sent_back_unchanged() -> None:
+    seen: list[httpx.Request] = []
+    p = provider([httpx.Response(200, json=gemini_body()), httpx.Response(200, json=OK_BODY)], seen)
+    first = await p.complete([ChatMessage(role="user", content="hi")])
+    assert first.tool_calls[0].extra_content == GEMINI_EXTRA
+
+    await p.complete(assistant_turn(first))
+    sent = json.loads(seen[1].content)["messages"][1]["tool_calls"][0]
+    assert sent["extra_content"] == GEMINI_EXTRA
+    assert sent["function"] == {"name": "count_errors", "arguments": '{"minutes": 15}'}
+
+
+async def test_providers_without_extra_content_get_the_standard_shape() -> None:
+    seen: list[httpx.Request] = []
+    p = provider([httpx.Response(200, json=OK_BODY), httpx.Response(200, json=OK_BODY)], seen)
+    first = await p.complete([ChatMessage(role="user", content="hi")])
+    assert first.tool_calls[0].extra_content is None
+
+    await p.complete(assistant_turn(first))
+    sent = json.loads(seen[1].content)["messages"][1]["tool_calls"][0]
+    assert set(sent) == {"id", "type", "function"}
+
+
+def test_recorded_responses_keep_extra_content() -> None:
+    original = LLMResponse.from_dict(
+        {
+            "content": None,
+            "tool_calls": [
+                {"id": "c", "name": "n", "arguments": {}, "extra_content": GEMINI_EXTRA}
+            ],
+        }
+    )
+    assert LLMResponse.from_dict(original.to_dict()) == original
+    old_fixture = {"content": None, "tool_calls": [{"id": "c", "name": "n", "arguments": {}}]}
+    assert LLMResponse.from_dict(old_fixture).tool_calls[0].extra_content is None
