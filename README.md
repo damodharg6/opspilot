@@ -63,10 +63,17 @@ make up                         # docker compose: db, shop, 3 MCP servers, api, 
 Then follow [docs/runbook.md](docs/runbook.md) to break the shop and watch an investigation.
 
 ```bash
-make test                       # unit + MCP + agent tests
-TEST_DATABASE_URL=postgresql+psycopg://... make test   # + Postgres queue/API/worker tests
+make test                       # unit + MCP + agent tests (Postgres tests skipped)
+make test-pg                    # everything, against a throwaway Postgres in Docker
 make lint
 ```
+
+`make test-pg` needs Docker running and port 5435 free. It starts a disposable
+`postgres:16-alpine` container, waits until it accepts connections, runs the whole
+suite with `TEST_DATABASE_URL` pointing at it, and stops the container afterwards,
+even when tests fail or you press Ctrl-C. To use your own database instead:
+`TEST_DATABASE_URL=postgresql+psycopg://... make test`. Override the port with
+`make test-pg PG_TEST_PORT=5436`.
 
 ## Deploy to AWS
 
