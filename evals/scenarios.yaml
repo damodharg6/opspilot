@@ -1,0 +1,58 @@
+# Staged incidents with ground truth. Each scenario:
+#   healthy traffic (warmup_s) -> fault on -> traffic continues (fault_s) -> investigate
+# warmup_s >= window so the previous scenario's fault is outside the look-back window.
+# Order matters: memory_leak runs last because freed memory is not always returned to the OS.
+
+defaults:
+  rate: 6            # requests per second
+  warmup_s: 120
+  fault_s: 60
+  window_minutes: 2
+
+scenarios:
+  - id: bad_deploy_basic
+    fault: buggy_deploy
+    expected: bad_deploy
+    notes: KeyError 500s on POST /orders for products without a promotion, right after release v1.5.0
+
+  - id: db_latency_basic
+    fault: slow_db
+    params: {delay_ms: 1200}
+    expected: db_latency
+    notes: every DB route slow, almost no 5xx
+
+  - id: db_connection_basic
+    fault: bad_config
+    expected: db_connection
+    notes: OperationalError on all DB routes, /health returns 503
+
+  - id: business_stock_exhaustion
+    fault: stock_exhaustion
+    params: {product_id: 2}
+    expected: business
+    notes: many 409 insufficient stock, zero 5xx. Must not be called an outage.
+
+  - id: bad_deploy_with_404_noise
+    fault: buggy_deploy
+    noise: not_found_spike
+    expected: bad_deploy
+    notes: a burst of harmless 404s runs alongside the real fault
+
+  - id: db_latency_low_traffic
+    fault: slow_db
+    params: {delay_ms: 900}
+    rate: 2
+    expected: db_latency
+    notes: same fault, little traffic, so less evidence
+
+  - id: healthy_control
+    fault: null
+    expected: unknown
+    notes: nothing is wrong. A good agent says so instead of inventing a cause.
+
+  - id: memory_leak_basic
+    fault: memory_leak
+    params: {kb_per_request: 2048, max_mb: 700}
+    fault_s: 90
+    expected: memory
+    notes: rss_mb climbs in runtime_stats lines; requests mostly succeed

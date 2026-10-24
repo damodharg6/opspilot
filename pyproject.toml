@@ -48,7 +48,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S105", "S106", "S108", "S603", "S607"]
+"tests/**" = ["S105", "S106", "S108", "S603", "S607", "ASYNC240"]
+"evals/**" = ["ASYNC240"]  # small sequential file I/O in a CLI harness
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
