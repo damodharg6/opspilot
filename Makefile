@@ -1,4 +1,4 @@
-.PHONY: install test test-pg test-all lint format up down logs migrate demo-history load evals evals-offline
+.PHONY: install test test-pg test-all lint format up down logs smoke migrate demo-history load evals evals-offline
 
 PG_TEST_CONTAINER ?= opspilot-test-pg
 PG_TEST_PORT ?= 5435
@@ -43,6 +43,9 @@ down:
 
 logs:
 	docker compose logs -f --tail=100
+
+smoke:
+	python -m scripts.smoke
 
 migrate:
 	docker compose run --rm migrate

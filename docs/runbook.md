@@ -15,6 +15,7 @@ make demo-history          # simulated deploy history in var/deploy-history
 ```bash
 make up                    # db, migrate, shop, 3 MCP servers, api, 2 workers
 docker compose ps          # everything healthy?
+make smoke                 # health of shop, api, 3 MCP servers + one count_errors call
 ```
 
 | Service | URL |
@@ -58,4 +59,7 @@ npx @modelcontextprotocol/inspector   # connect to http://localhost:8101/mcp (St
 | Report says `unknown` | Was there traffic during the fault? Is `window_minutes` long enough? |
 | `401` from the API | `X-OpsPilot-Secret` must match `OPSPILOT_API_SECRET` |
 | Git tools say "no git repository" | Run `make demo-history` before `make up` |
-| Port 5432 in use | Stop your local Postgres or change the db port mapping |
+| `make up`: `bind: address already in use` on `127.0.0.1:5432` | A local Postgres (Homebrew, Postgres.app, EDB installer) owns 5432; find it with `netstat -anv -p tcp \| grep '\.5432 '`. Set `DB_HOST_PORT` in `.env` to a free port (e.g. `5436`). Only `psql` from the host uses it; containers always talk to `db:5432` |
+| Worker `Restarting`, log says `OPSPILOT_LLM_API_KEY is not set` | Put a key in `.env` (or use `OPSPILOT_LLM_PROVIDER=ollama`), then `docker compose up -d worker` |
+| `make up` fails in `pip install` with `ReadTimeoutError: files.pythonhosted.org` | Slow network to PyPI during the image build; run `make up` again (the dependency layer is cached once it succeeds) |
+| `make smoke` shows a FAIL row | `docker compose ps` and `docker compose logs <service>` for that row's service |
