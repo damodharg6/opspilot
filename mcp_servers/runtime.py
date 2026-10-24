@@ -33,7 +33,7 @@ def make_metrics_backend(s: McpSettings) -> MetricsBackend:
 
 
 def make_git_backend(s: McpSettings) -> GitBackend:
-    if s.backend == "aws":
+    if s.git_backend == "github":
         from mcp_servers.backends.aws import GitHubBackend
 
         return GitHubBackend(s.github_repo, s.github_token.get_secret_value() or None)

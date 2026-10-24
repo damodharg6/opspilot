@@ -7,7 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class McpSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MCP_", env_file=".env", extra="ignore")
 
-    backend: Literal["local", "aws"] = "local"
+    backend: Literal["local", "aws"] = "local"  # logs + metrics
+    git_backend: Literal["local", "github"] = "local"
     host: str = "127.0.0.1"
     port: int = 8101
     # Host headers accepted by the HTTP transport (DNS-rebinding protection).
