@@ -1,0 +1,138 @@
+# Local stack. `make up`, then open http://localhost:8080/docs
+#
+#   shop ──JSON logs──> shared volume <── mcp-logs, mcp-metrics
+#   var/deploy-history (git) <────────── mcp-git
+#   api (202 + queue in Postgres) <──── worker xN ──> MCP servers + LLM API
+
+x-app: &app
+  build: .
+  image: opspilot:local
+  env_file: .env
+  restart: unless-stopped
+
+x-mcp-env: &mcp-env
+  MCP_HOST: 0.0.0.0
+  MCP_BACKEND: local
+  MCP_LOG_FILE: /var/log/shop/shop.jsonl
+  MCP_ALLOWED_HOSTS: '["localhost:*","127.0.0.1:*","mcp-logs:*","mcp-metrics:*","mcp-git:*"]'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      OPSPILOT_DATABASE_URL: postgresql+psycopg://app:${POSTGRES_PASSWORD}@db:5432/app
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+
+  shop:
+    <<: *app
+    command: ["uvicorn", "shop.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      SHOP_DATABASE_URL: postgresql+psycopg://app:${POSTGRES_PASSWORD}@db:5432/app
+      SHOP_ADMIN_TOKEN: ${SHOP_ADMIN_TOKEN}
+      SHOP_LOG_FILE: /var/log/shop/shop.jsonl
+    volumes:
+      - shop-logs:/var/log/shop
+    ports:
+      - "8000:8000"
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mcp-logs:
+    <<: *app
+    command: ["python", "-m", "mcp_servers.logs_server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8101
+    volumes:
+      - shop-logs:/var/log/shop:ro
+    ports:
+      - "127.0.0.1:8101:8101"
+    healthcheck: &mcp-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:$${MCP_PORT}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mcp-metrics:
+    <<: *app
+    command: ["python", "-m", "mcp_servers.metrics_server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8102
+    volumes:
+      - shop-logs:/var/log/shop:ro
+    ports:
+      - "127.0.0.1:8102:8102"
+    healthcheck: *mcp-health
+
+  mcp-git:
+    <<: *app
+    command: ["python", "-m", "mcp_servers.git_server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8103
+      MCP_GIT_REPO_PATH: /repo
+    volumes:
+      - ./var/deploy-history:/repo:ro
+    ports:
+      - "127.0.0.1:8103:8103"
+    healthcheck: *mcp-health
+
+  api:
+    <<: *app
+    command: ["uvicorn", "opspilot.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080"]
+    environment:
+      OPSPILOT_DATABASE_URL: postgresql+psycopg://app:${POSTGRES_PASSWORD}@db:5432/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "opspilot.worker.main"]
+    environment:
+      OPSPILOT_DATABASE_URL: postgresql+psycopg://app:${POSTGRES_PASSWORD}@db:5432/app
+      OPSPILOT_MCP_SERVERS: '{"logs":"http://mcp-logs:8101/mcp","metrics":"http://mcp-metrics:8102/mcp","git":"http://mcp-git:8103/mcp"}'
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      mcp-logs: {condition: service_healthy}
+      mcp-metrics: {condition: service_healthy}
+      mcp-git: {condition: service_healthy}
+    deploy:
+      replicas: 2  # scale out: docker compose up --scale worker=4
+    stop_grace_period: 120s  # let an in-flight investigation finish on deploy
+
+volumes:
+  pgdata:
+  shop-logs:

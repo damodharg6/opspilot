@@ -13,22 +13,28 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 
 import httpx
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from scripts import deploy_history
 
 
+class ScriptSettings(BaseSettings):
+    """Reads SHOP_URL / SHOP_ADMIN_TOKEN from the environment or .env."""
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    shop_url: str = "http://localhost:8000"
+    shop_admin_token: SecretStr = SecretStr("")
+
+
 def _client() -> httpx.Client:
-    token = os.getenv("SHOP_ADMIN_TOKEN", "")
+    settings = ScriptSettings()
+    token = settings.shop_admin_token.get_secret_value()
     if not token:
         raise SystemExit("Set SHOP_ADMIN_TOKEN (see .env.example)")
-    return httpx.Client(
-        base_url=os.getenv("SHOP_URL", "http://localhost:8000"),
-        headers={"X-Admin-Token": token},
-        timeout=10,
-    )
+    return httpx.Client(base_url=settings.shop_url, headers={"X-Admin-Token": token}, timeout=10)
 
 
 def _parse_params(pairs: list[str]) -> dict[str, object]:

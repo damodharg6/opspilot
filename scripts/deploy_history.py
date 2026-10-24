@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 REPO = Path(os.getenv("DEPLOY_HISTORY_PATH", "var/deploy-history"))
@@ -71,7 +71,7 @@ def init(force: bool = False) -> None:
         return
     REPO.mkdir(parents=True, exist_ok=True)
     _git("init", "-q", "-b", "main")
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)  # noqa: UP017 - runs on the host (Python 3.9)
     _commit(
         {"shop/pricing.py": PRICING_V1, "VERSION": "1.3.0\n"},
         "release v1.3.0: order pricing service",

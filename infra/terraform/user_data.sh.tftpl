@@ -1,0 +1,45 @@
+#!/bin/bash
+# First boot: Docker, swap, repo, secrets from SSM, then start the stack.
+set -euo pipefail
+exec > /var/log/opspilot-bootstrap.log 2>&1
+
+dnf install -y docker git
+systemctl enable --now docker
+
+# Docker Compose v2 plugin
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# 2 GB swap: a micro instance runs 8 containers
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+fi
+
+cd /opt
+[ -d opspilot ] || git clone "${repo_url}" opspilot
+cd opspilot
+
+param() {
+  aws ssm get-parameter --region "${region}" --with-decryption \
+    --name "/${project}/$1" --query Parameter.Value --output text
+}
+
+umask 077
+cat > .env <<EOF
+POSTGRES_PASSWORD=$(param postgres-password)
+SHOP_ADMIN_TOKEN=$(param shop-admin-token)
+OPSPILOT_API_SECRET=$(param opspilot-api-secret)
+OPSPILOT_LLM_PROVIDER=${llm_provider}
+OPSPILOT_LLM_MODEL=${llm_model}
+OPSPILOT_LLM_API_KEY=$(param llm-api-key)
+AWS_REGION=${region}
+EOF
+
+python3 -m scripts.deploy_history init || true
+chown -R 10001:10001 var
+
+docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build

@@ -1,0 +1,60 @@
+name: Deploy
+
+# After CI passes on main: GitHub OIDC -> short-lived AWS role -> SSM Run Command.
+# No SSH keys stored in GitHub and no inbound port needed for deploys.
+#
+# Switch on with repository variables:
+#   DEPLOY_ENABLED=true, AWS_REGION, AWS_DEPLOY_ROLE_ARN, EC2_INSTANCE_ID
+# (the role and instance come from infra/terraform outputs).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # needed for OIDC
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Roll out the exact commit that passed CI
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          INSTANCE: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          script=$(cat <<EOF
+          set -e
+          cd /opt/opspilot
+          git fetch --depth 1 origin $SHA
+          git checkout -q $SHA
+          docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build
+          for i in \$(seq 1 24); do curl -fsS localhost:8080/health && exit 0; sleep 5; done
+          echo "API not healthy after 120s"; exit 1
+          EOF
+          )
+          params=$(jq -n --arg s "$script" '{commands: [$s], executionTimeout: ["1200"]}')
+          id=$(aws ssm send-command --instance-ids "$INSTANCE" \
+                 --document-name AWS-RunShellScript --comment "deploy $SHA" \
+                 --parameters "$params" --query Command.CommandId --output text)
+          echo "SSM command: $id"
+          aws ssm wait command-executed --command-id "$id" --instance-id "$INSTANCE" || true
+          aws ssm get-command-invocation --command-id "$id" --instance-id "$INSTANCE" \
+            --query '{status: Status, out: StandardOutputContent, err: StandardErrorContent}'
+          status=$(aws ssm get-command-invocation --command-id "$id" --instance-id "$INSTANCE" \
+                     --query Status --output text)
+          test "$status" = "Success"

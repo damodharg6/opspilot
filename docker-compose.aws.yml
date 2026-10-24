@@ -1,0 +1,42 @@
+# AWS override: docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d
+# - Container logs go to CloudWatch Logs via the awslogs driver (EC2 instance role).
+# - Logs and metrics MCP servers read CloudWatch instead of the shared file.
+# - Only the API is published; the shop is published for the demo load generator.
+
+x-cw: &cw
+  driver: awslogs
+  options:
+    awslogs-region: ${AWS_REGION:-ap-south-1}
+    awslogs-group: /opspilot/app
+    awslogs-create-group: "false"
+
+services:
+  db:
+    ports: !reset []
+  shop:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-ap-south-1}
+        awslogs-group: /opspilot/shop
+        awslogs-create-group: "false"
+  mcp-logs:
+    environment:
+      MCP_BACKEND: aws
+      MCP_AWS_REGION: ${AWS_REGION:-ap-south-1}
+      MCP_LOG_GROUP: /opspilot/shop
+    logging: *cw
+  mcp-metrics:
+    environment:
+      MCP_BACKEND: aws
+      MCP_AWS_REGION: ${AWS_REGION:-ap-south-1}
+      MCP_METRICS_NAMESPACE: OpsPilot/Shop
+    logging: *cw
+  mcp-git:
+    logging: *cw
+  api:
+    logging: *cw
+  worker:
+    logging: *cw
+  migrate:
+    logging: *cw
