@@ -1,0 +1,74 @@
+/* Long-form reading for the blog. Builds on styles.css (colours, topbar, footer). */
+
+.post-wrap { max-width: 720px; margin: 0 auto; padding: 56px 16px 24px; }
+.crumbs { font: 600 0.78rem var(--mono); color: var(--muted); margin: 0 0 18px; }
+.crumbs a { color: var(--muted); text-decoration: none; }
+.crumbs a:hover { color: var(--text); }
+.post-wrap h1 { font-size: clamp(2rem, 5vw, 2.8rem); letter-spacing: -0.03em; margin-bottom: 14px; }
+.meta { font: 0.85rem var(--mono); color: var(--muted); margin: 0 0 32px; }
+.standfirst { font-size: 1.2rem; line-height: 1.6; color: var(--muted); margin: 0 0 36px; }
+
+.prose { font-size: 1.08rem; line-height: 1.75; }
+.prose h2 { font-size: 1.55rem; letter-spacing: -0.02em; margin: 52px 0 14px; scroll-margin-top: 80px; }
+.prose h3 { font-size: 1.15rem; margin: 30px 0 8px; }
+.prose p { margin: 0 0 18px; }
+.prose ul, .prose ol { margin: 0 0 20px; padding-left: 22px; }
+.prose li { margin: 6px 0; }
+.prose strong { color: var(--text); }
+.prose a { color: var(--info); }
+
+.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 0 0 32px; }
+.toc p { margin: 0 0 8px; font: 600 0.78rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.toc ol { margin: 0; padding-left: 20px; font-size: 0.98rem; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+
+.analogy, .note, .warn {
+  border-radius: 12px; padding: 16px 18px; margin: 24px 0; font-size: 1rem; line-height: 1.65;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.analogy { border-left: 4px solid var(--info); }
+.note { border-left: 4px solid var(--ok); }
+.warn { border-left: 4px solid var(--accent); }
+.analogy .label, .note .label, .warn .label {
+  display: block; font: 700 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;
+}
+.analogy .label { color: var(--info); }
+.note .label { color: var(--ok); }
+.warn .label { color: var(--accent); }
+
+.flow { list-style: none; counter-reset: flow; padding: 0 !important; display: grid; gap: 10px; }
+.flow > li { counter-increment: flow; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 !important; }
+.flow > li::before { content: counter(flow); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 0.85rem var(--mono); background: var(--accent-soft); color: var(--accent); }
+
+.facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0 28px; }
+.facts-grid div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.facts-grid b { display: block; font: 700 1.3rem var(--mono); }
+.facts-grid span { font-size: 0.85rem; color: var(--muted); }
+
+.story { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 6px; margin: 28px 0; }
+.story h2 { margin-top: 0 !important; }
+.story .tag { display: inline-block; font: 700 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 8px; }
+.story dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; margin: 0 0 18px; font-size: 1rem; }
+.story dt { font: 600 0.8rem var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 3px; }
+.story dd { margin: 0; }
+
+.glossary { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 0 0 24px; }
+.glossary div { display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); font-size: 1rem; }
+.glossary div:last-child { border-bottom: 0; }
+.glossary dt { font-weight: 700; }
+.glossary dd { margin: 0; color: var(--muted); }
+
+.faq details { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin: 0 0 10px; }
+.faq summary { cursor: pointer; padding: 14px 16px; font-weight: 600; }
+.faq details p { margin: 0; padding: 0 16px 16px; color: var(--muted); }
+
+.next { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 48px 0 0; }
+
+.post-list { display: grid; gap: 14px; margin: 8px 0 0; }
+.post-list .card h2 { font-size: 1.3rem; margin: 0; }
+
+@media (max-width: 640px) {
+  .story dl, .glossary div { grid-template-columns: 1fr; gap: 4px; }
+  .post-wrap { padding-top: 36px; }
+}

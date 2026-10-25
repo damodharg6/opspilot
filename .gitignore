@@ -11,7 +11,6 @@ htmlcov/
 .DS_Store
 var/
 evals/results/*.json
-!evals/results/.gitkeep
 infra/terraform/.terraform/
 infra/terraform/*.tfstate*
 infra/terraform/*.tfvars
@@ -24,3 +23,6 @@ CLAUDE.md
 
 # Local Netlify folder
 .netlify
+
+# Written at deploy time (build stamp shown in the site footer)
+showcase/version.json

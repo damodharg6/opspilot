@@ -5,6 +5,7 @@ import json
 import subprocess
 import time
 from collections.abc import Callable
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,9 @@ from scripts import deploy_history, record_demos
 from scripts.demo import LIVE_WARMUP_S, SCENARIO_IDS, reset_deploy_history, scenario
 from scripts.showcase_server import create_app
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "showcase" / "data"
+SITE_DIR = Path(__file__).resolve().parent.parent / "showcase"
+DATA_DIR = SITE_DIR / "data"
+PAGES = sorted(SITE_DIR.rglob("*.html"))
 
 
 def fake_record(scenario_id: str) -> dict[str, Any]:
@@ -141,3 +144,64 @@ def test_recorded_demos_have_what_the_site_needs() -> None:
             assert {"step", "tool", "arguments", "result_preview", "duration_ms"} <= set(step)
         if report := record["incident"]["report"]:
             assert record["correct"] == (report["category"] == record["expected"])
+
+
+class _PageScan(HTMLParser):
+    """Collects local links/assets, inline script bodies and style attributes of one page."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.refs: list[str] = []
+        self.inline_scripts = 0
+        self.style_attrs = 0
+        self._in_script = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = dict(attrs)
+        self.style_attrs += "style" in values
+        self._in_script = tag == "script" and "src" not in values
+        for key in ("href", "src"):
+            if (ref := values.get(key)) and not ref.startswith(("http", "mailto:", "#")):
+                self.refs.append(ref)
+
+    def handle_endtag(self, tag: str) -> None:
+        self._in_script = False
+
+    def handle_data(self, data: str) -> None:
+        self.inline_scripts += self._in_script and bool(data.strip())
+
+
+def scan(page: Path) -> _PageScan:
+    parser = _PageScan()
+    parser.feed(page.read_text())
+    return parser
+
+
+def resolve(page: Path, ref: str) -> Path:
+    target = (page.parent / ref.split("#")[0].split("?")[0]).resolve()
+    return target / "index.html" if ref.split("#")[0].endswith("/") or target.is_dir() else target
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: str(p.relative_to(SITE_DIR)))
+def test_site_links_and_assets_resolve(page: Path) -> None:
+    missing = [ref for ref in scan(page).refs if not resolve(page, ref).exists()]
+    assert not missing, f"broken links in {page.name}: {missing}"
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: str(p.relative_to(SITE_DIR)))
+def test_site_has_no_inline_code_blocked_by_csp(page: Path) -> None:
+    found = scan(page)
+    assert (found.inline_scripts, found.style_attrs) == (0, 0)
+
+
+def test_blog_lists_every_post() -> None:
+    posts = {p.parent.name for p in (SITE_DIR / "blog").glob("*/index.html")}
+    refs = scan(SITE_DIR / "blog" / "index.html").refs
+    listed = {ref.strip("/") for ref in refs if ref.endswith("/")}
+    assert posts and posts <= listed
+
+
+def test_hidden_attribute_beats_component_display_rules() -> None:
+    # Without this rule `.btn { display: inline-flex }` showed the hidden Run live button.
+    css = (SITE_DIR / "assets" / "styles.css").read_text()
+    assert "[hidden] { display: none !important; }" in css

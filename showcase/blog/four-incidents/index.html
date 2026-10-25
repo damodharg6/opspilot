@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Four incidents, in plain English · OpsPilot blog</title>
+  <meta name="description" content="A broken release, a slow database, a sold-out product and a memory leak: what went wrong, which clues OpsPilot checked, and what it concluded.">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/blog.css">
+</head>
+<body data-root="../../">
+  <header class="topbar">
+    <a class="brand" href="../../" aria-label="OpsPilot home"><span class="brand-mark" aria-hidden="true"></span>OpsPilot</a>
+    <nav aria-label="Sections">
+      <a href="../../#demos">Demos</a>
+      <a href="../../#how">How it works</a>
+      <a href="../../#roadmap">AI roadmap</a>
+      <a href="../">Blog</a>
+    </nav>
+    <a class="gh" href="https://github.com/damodharg6/opspilot">GitHub</a>
+  </header>
+
+  <main class="post-wrap">
+    <p class="crumbs"><a href="../../">OpsPilot</a> / <a href="../">Blog</a> / Four incidents</p>
+    <h1>Four incidents, in plain English</h1>
+    <p class="meta">5 min read · real recordings from 24 October 2026</p>
+    <p class="standfirst">
+      We built a small online shop that sells car parts, then broke it on purpose in four
+      different ways. Each time, an alarm went off and OpsPilot investigated on its own.
+      Here is what happened, told as stories, with the real numbers.
+    </p>
+
+    <div class="note">
+      <span class="label">How each test ran</span>
+      Two minutes of normal shoppers (about six visits a second), then a fault switched on
+      for another one to one and a half minutes while shopping continued, then the alarm.
+      OpsPilot was told only "the shop looks unhealthy". It had to find the cause itself.
+    </div>
+
+    <nav class="toc" aria-label="Contents">
+      <p>The four incidents</p>
+      <ol>
+        <li><a href="#deploy">A release breaks checkout</a></li>
+        <li><a href="#slow">Everything is slow, nothing is broken</a></li>
+        <li><a href="#stock">Not an outage at all</a></li>
+        <li><a href="#memory">Memory quietly climbing</a></li>
+        <li><a href="#learned">What the four have in common</a></li>
+      </ol>
+    </nav>
+
+    <article class="prose">
+      <section class="story" id="deploy">
+        <span class="tag">Incident 1 · buggy deploy</span>
+        <h2>A release breaks checkout</h2>
+        <p>
+          A new version of the shop, "v1.5.0", went out with a change to how order prices are
+          calculated. It added promotions, but only knew the discounts for two of the four
+          products. Orders for the other two crashed.
+        </p>
+        <dl>
+          <dt>What customers saw</dt><dd>Before: 724 visits, every one worked. After: 79 of 352 visits failed with an error page, all of them when placing an order.</dd>
+          <dt>Clues checked</dt><dd>7, in this order: counted the errors, read the change log, checked the error rate and speed graphs, opened the new release to read exactly what changed, then searched the diary for the failing orders.</dd>
+          <dt>Conclusion</dt><dd><strong>Bad deploy.</strong> The new release's pricing code crashes for products without a promotion. Suggested fix: undo the release, or make the code use "no discount" when a product has none.</dd>
+          <dt>Time and confidence</dt><dd>About 32 seconds. Medium confidence: one quote in its first draft didn't match the evidence exactly, so it was removed and confidence lowered.</dd>
+        </dl>
+        <p>
+          <strong>Why it matters:</strong> this is the most common kind of outage. The useful
+          part is the link between "errors started" and "this exact change went out", which a
+          person would normally piece together by hand.
+        </p>
+      </section>
+
+      <section class="story" id="slow">
+        <span class="tag">Incident 2 · slow database</span>
+        <h2>Everything is slow, nothing is broken</h2>
+        <p>
+          The database, the shop's filing cabinet, started taking over a second to answer
+          each question. Nothing crashed. Pages just loaded very slowly.
+        </p>
+        <dl>
+          <dt>What customers saw</dt><dd>Zero errors. But a typical page went from about <strong>10 milliseconds to 1.2 seconds</strong>, more than 100 times slower.</dd>
+          <dt>Clues checked</dt><dd>4: counted errors (none, so that's not it), looked at the speed graphs, then read the diary for slow requests.</dd>
+          <dt>Conclusion</dt><dd><strong>Database slowness.</strong> Requests still succeed but take over 1.2 seconds. Suggested next step: look for slow queries, locking or an overloaded database.</dd>
+          <dt>Time and confidence</dt><dd>About 34 seconds. Medium confidence, again after one unproven quote was removed.</dd>
+        </dl>
+        <p>
+          <strong>Why it matters:</strong> a tool that only counts errors would say "all fine".
+          Customers would disagree. OpsPilot noticed that the error count was zero and moved on
+          to speed.
+        </p>
+      </section>
+
+      <section class="story" id="stock">
+        <span class="tag">Incident 3 · stock exhaustion</span>
+        <h2>Not an outage at all</h2>
+        <p>
+          One product, the front brake pads, sold out. Customers trying to buy them got a
+          polite "insufficient stock" message. The systems were completely healthy. This is a
+          business situation, not a technical failure.
+        </p>
+        <dl>
+          <dt>What customers saw</dt><dd>32 "out of stock" messages out of 368 visits. Zero real errors, normal speed.</dd>
+          <dt>Clues checked</dt><dd>5: the error and speed graphs, then three searches of the diary.</dd>
+          <dt>Conclusion</dt><dd><strong>Business issue, not an outage.</strong> The service is healthy; no technical action needed.</dd>
+          <dt>Time and confidence</dt><dd>About 63 seconds. High confidence, and every quote checked out.</dd>
+        </dl>
+        <p>
+          <strong>Why it matters:</strong> a bad assistant would invent a technical cause and
+          wake up the database team for nothing. Saying "this isn't an outage" is just as
+          valuable as finding one.
+        </p>
+      </section>
+
+      <section class="story" id="memory">
+        <span class="tag">Incident 4 · memory leak</span>
+        <h2>Memory quietly climbing</h2>
+        <p>
+          Every visit made the shop hold on to a little extra memory and never let it go. Like
+          a desk that collects paper and is never cleared, it works fine until suddenly there
+          is no space left.
+        </p>
+        <dl>
+          <dt>What customers saw</dt><dd>Nothing yet: all 544 visits worked at normal speed.</dd>
+          <dt>Clues checked</dt><dd>6: errors (none), three graphs including memory use, and two diary searches.</dd>
+          <dt>Conclusion</dt><dd><strong>Memory problem.</strong> Memory use is growing abnormally. Suggested fix: stop the leak or restart the service.</dd>
+          <dt>Time and confidence</dt><dd>About 46 seconds. Medium confidence after one quote was removed.</dd>
+        </dl>
+        <div class="warn">
+          <span class="label">Honest footnote</span>
+          Our demo shop writes a line in its diary when we switch a fault on, and OpsPilot
+          quoted that line as evidence. A real system wouldn't announce its own leak, so in
+          real life the memory graph would have to carry the argument alone. Hiding that line
+          from the assistant is on our improvement list.
+        </div>
+        <p>
+          <strong>Why it matters:</strong> catching this before anything fails turns a
+          middle-of-the-night outage into a daytime task.
+        </p>
+      </section>
+
+      <h2 id="learned">What the four have in common</h2>
+      <ul>
+        <li><strong>It started from the same vague alarm every time</strong> and still reached four different, correct answers.</li>
+        <li><strong>It changed its approach to fit the evidence</strong>: commits for the release, speed for the database, memory for the leak.</li>
+        <li><strong>It showed its work.</strong> Every report lists every clue it checked, and the receipts check removed unproven quotes in three of the four cases.</li>
+        <li><strong>It knew when nothing was broken.</strong></li>
+      </ul>
+      <p>
+        You can watch each investigation replay step by step on the
+        <a href="../../#demos">demos section</a>, or read
+        <a href="../is-it-safe/">why it is safe to use</a>.
+      </p>
+    </article>
+
+    <div class="next">
+      <a class="card post-card" href="../is-it-safe/"><h3>Next: Is it safe?</h3><span class="read">Read →</span></a>
+      <a class="card post-card" href="../opspilot-explained/"><h3>Back: OpsPilot, explained</h3><span class="read">Read →</span></a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>OpsPilot · built by Giddaluru Damodhar · <a href="https://github.com/damodharg6/opspilot">source</a> · <a href="../">blog</a><span id="build"></span></p>
+  </footer>
+  <script src="../../assets/site.js" defer></script>
+</body>
+</html>

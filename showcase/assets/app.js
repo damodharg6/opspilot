@@ -39,7 +39,15 @@ const state = { demos: [], cache: new Map(), current: null, token: 0, live: fals
 // --- data -----------------------------------------------------------------------------------
 async function getJSON(url, options) {
   const resp = await fetch(url, options);
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+  if (!resp.ok) {
+    let detail = resp.statusText;
+    try {
+      detail = (await resp.json()).detail || detail;
+    } catch {
+      // not JSON: a static host or proxy answered, not the showcase server
+    }
+    throw new Error(`${resp.status}${detail ? `: ${detail}` : ""}`);
+  }
   return resp.json();
 }
 
@@ -252,17 +260,26 @@ function renderList() {
 }
 
 // --- live mode (only when served by scripts/showcase_server.py) -------------------------------------
+const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
+const LIVE_HELP = "Live runs need the stack on your machine: make up && make showcase, then open http://localhost:8090";
+
+function showLive(on) {
+  state.live = on;
+  $("#btn-live").hidden = !on;
+  $("#live-note").hidden = !on;
+  $("#live-off").hidden = on;
+}
+
 async function detectLive() {
+  showLive(false);
   // Live runs only exist behind `make showcase` on your own machine; never probe from a host.
-  if (!["localhost", "127.0.0.1"].includes(location.hostname)) return;
+  if (!LOCAL_HOSTS.includes(location.hostname)) return;
   try {
     const status = await getJSON("live/status");
-    state.live = Boolean(status.live);
+    showLive(status.live === true && Array.isArray(status.scenarios) && status.scenarios.length > 0);
   } catch {
-    state.live = false;
+    showLive(false);
   }
-  $("#btn-live").hidden = !state.live;
-  $("#live-note").hidden = !state.live;
 }
 
 async function runLive() {
@@ -288,6 +305,7 @@ async function runLive() {
     });
   } catch (err) {
     line(`could not start: ${err.message}`, "err");
+    line(LIVE_HELP, "err");
     $("#btn-live").disabled = false;
     return;
   }

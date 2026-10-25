@@ -9,7 +9,9 @@ It never changes anything: it investigates and recommends, and a human acts.
 
 **Showcase:** [opspilot-showcase.netlify.app](https://opspilot-showcase.netlify.app): watch
 four real investigations replay step by step (buggy deploy, slow database, stock
-exhaustion, memory leak), plus the architecture and the AI roadmap.
+exhaustion, memory leak), plus the architecture, the AI roadmap and a
+[plain-English blog](https://opspilot-showcase.netlify.app/blog/).
+**End-to-end guide (PDF):** [docs/OpsPilot-end-to-end.pdf](docs/OpsPilot-end-to-end.pdf).
 
 ## Showcase
 
@@ -74,7 +76,10 @@ variant, a business case, and a healthy control). See [evals/README.md](evals/RE
 
 | Date | Model | Accuracy | Grounded | Notes |
 | --- | --- | --- | --- | --- |
-| | | | | first live run pending |
+| 2026-10-24 | gemini-3.5-flash, gemini-3.5-flash-lite | 4/4 | yes: 3 unproven snippets dropped | Showcase subset (bad deploy, slow DB, stock exhaustion, memory leak), run through the real API, queue and workers; recordings in [showcase/data](showcase/data) |
+
+The full 8-scenario suite (`make evals`) has not been run live yet; the row above covers 4 of
+its scenarios.
 
 ## Run it locally
 
@@ -110,7 +115,8 @@ forwarder, SSM secrets, budget alerts and a GitHub OIDC deploy role:
 
 - [docs/architecture.md](docs/architecture.md): components, incident lifecycle, design
   decisions and trade-offs, failure modes, scaling path, AI roadmap, security model
-- [docs/decisions.md](docs/decisions.md): my own notes on each decision
+- [docs/OpsPilot-end-to-end.pdf](docs/OpsPilot-end-to-end.pdf): the whole workflow end to
+  end in one document, from alarm to stored report, with file and function references
 - [docs/engineering-rules.md](docs/engineering-rules.md): how the project is built and changed
 
 Highlights:

@@ -21,6 +21,7 @@
       <a href="#engineering">Engineering</a>
       <a href="#roadmap">AI roadmap</a>
       <a href="#run">Run it</a>
+      <a href="blog/">Blog</a>
     </nav>
     <a class="gh" href="https://github.com/damodharg6/opspilot">GitHub</a>
   </header>
@@ -41,7 +42,7 @@
           <a class="btn" href="#how">See the architecture</a>
         </div>
         <ul class="facts" aria-label="Key facts">
-          <li><strong>~20 s</strong> alarm to report</li>
+          <li><strong>30–60 s</strong> alarm to report</li>
           <li><strong>0</strong> write permissions</li>
           <li><strong>100%</strong> evidence grounded</li>
         </ul>
@@ -81,6 +82,11 @@
               <button class="btn live" id="btn-live" type="button" hidden>Run live</button>
             </div>
           </header>
+          <p class="live-off" id="live-off">
+            <strong>Want to see one happen live?</strong> These are recordings. Live runs stage
+            a real incident on your own machine: <code>make up &amp;&amp; make showcase</code>,
+            then open <code>localhost:8090</code>. <a href="#run">How to run it</a>
+          </p>
 
           <ol class="rail" id="rail" aria-label="Incident phases">
             <li data-phase="reset">Reset</li>
@@ -223,6 +229,19 @@
     </section>
 
     <!-- run it --------------------------------------------------------------------------->
+    <section id="learn" class="section">
+      <div class="section-head">
+        <p class="kicker">Blog · no jargon</p>
+        <h2>New to incidents and on-call? Start here.</h2>
+        <p class="sub">Three short reads for anyone, engineer or not: what OpsPilot is for, what happened in each demo, and why it is safe.</p>
+      </div>
+      <div class="cards">
+        <a class="card post-card" href="blog/opspilot-explained/"><h3>OpsPilot, explained without the jargon</h3><p>Why outages hurt, what an AI first responder does, where it helps and who it helps.</p><span class="read">6 min read →</span></a>
+        <a class="card post-card" href="blog/four-incidents/"><h3>Four incidents, in plain English</h3><p>A broken release, a slow database, a sold-out product and a memory leak, told as stories.</p><span class="read">5 min read →</span></a>
+        <a class="card post-card" href="blog/is-it-safe/"><h3>Is it safe? What it can and can't do</h3><p>Read-only by design, receipts for every claim, honest limits, plus a glossary and FAQ.</p><span class="read">5 min read →</span></a>
+      </div>
+    </section>
+
     <section id="run" class="section">
       <div class="section-head">
         <p class="kicker">Run it</p>
@@ -238,6 +257,7 @@ make showcase                      <span class="c"># this site + live runs on :8
         <div class="run-notes">
           <p><strong>Live mode.</strong> Opened from <code>make showcase</code>, every demo gets a <em>Run live</em> button that stages the incident on your machine and streams the investigation here.</p>
           <p><strong>Refresh the recordings</strong> after a prompt or model change with <code>make record-demos</code>.</p>
+          <p><strong>Read the whole workflow</strong> end to end, with file and function references: <a href="https://github.com/damodharg6/opspilot/blob/main/docs/OpsPilot-end-to-end.pdf">OpsPilot end-to-end guide (PDF)</a>.</p>
           <p><strong>Deploy.</strong> This page is static and hosted on Netlify; the stack deploys to AWS with the Terraform in <code>infra/</code>.</p>
         </div>
       </div>
@@ -245,9 +265,10 @@ make showcase                      <span class="c"># this site + live runs on :8
   </main>
 
   <footer class="footer">
-    <p>OpsPilot · built by Giddaluru Damodhar · <a href="https://github.com/damodharg6/opspilot">source</a> · <a href="https://github.com/damodharg6/opspilot/blob/main/docs/architecture.md">architecture</a></p>
+    <p>OpsPilot · built by Giddaluru Damodhar · <a href="https://github.com/damodharg6/opspilot">source</a> · <a href="https://github.com/damodharg6/opspilot/blob/main/docs/architecture.md">architecture</a> · <a href="blog/">blog</a> · <a href="https://github.com/damodharg6/opspilot/blob/main/docs/OpsPilot-end-to-end.pdf">end-to-end guide (PDF)</a><span id="build"></span></p>
   </footer>
 
+  <script src="assets/site.js" defer></script>
   <script src="assets/app.js" defer></script>
 </body>
 </html>

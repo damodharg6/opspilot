@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpsPilot, explained without the jargon · OpsPilot blog</title>
+  <meta name="description" content="Why websites break at 3 a.m., what it costs, and how an AI first responder helps the people who get woken up. A plain-English guide to OpsPilot.">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../assets/styles.css">
+  <link rel="stylesheet" href="../../assets/blog.css">
+</head>
+<body data-root="../../">
+  <header class="topbar">
+    <a class="brand" href="../../" aria-label="OpsPilot home"><span class="brand-mark" aria-hidden="true"></span>OpsPilot</a>
+    <nav aria-label="Sections">
+      <a href="../../#demos">Demos</a>
+      <a href="../../#how">How it works</a>
+      <a href="../../#roadmap">AI roadmap</a>
+      <a href="../">Blog</a>
+    </nav>
+    <a class="gh" href="https://github.com/damodharg6/opspilot">GitHub</a>
+  </header>
+
+  <main class="post-wrap">
+    <p class="crumbs"><a href="../../">OpsPilot</a> / <a href="../">Blog</a> / Explained</p>
+    <h1>OpsPilot, explained without the jargon</h1>
+    <p class="meta">6 min read · for anyone, no technical background needed</p>
+    <p class="standfirst">
+      Every app you use, from food delivery to your bank, is looked after by people who
+      get woken up when it breaks. OpsPilot is an AI assistant that takes the first look
+      for them. Here is why that matters, how it works, where it helps, and who it helps.
+    </p>
+
+    <nav class="toc" aria-label="Contents">
+      <p>In this post</p>
+      <ol>
+        <li><a href="#why">Why: the 3 a.m. problem</a></li>
+        <li><a href="#what">What OpsPilot is</a></li>
+        <li><a href="#how">How it works, in five steps</a></li>
+        <li><a href="#where-runs">Where it runs</a></li>
+        <li><a href="#where-helps">Where it helps</a></li>
+        <li><a href="#why-use">Why use it</a></li>
+        <li><a href="#who">Who it helps</a></li>
+        <li><a href="#not">What it is not</a></li>
+      </ol>
+    </nav>
+
+    <article class="prose">
+      <h2 id="why">Why: the 3 a.m. problem</h2>
+      <p>
+        Online services break. A new version goes out with a hidden mistake, a database gets
+        slow, a server runs out of memory. When that happens, an automatic alarm goes off and
+        a person's phone rings. That person is the <strong>on-call engineer</strong>, and it is
+        often 3 a.m.
+      </p>
+      <p>
+        Before they can fix anything, they have to work out <em>what</em> is wrong. That means
+        opening several tools, reading thousands of lines of records, comparing graphs and
+        checking what changed recently, all while half asleep and while customers can't
+        pay, order or log in. This first "what is going on?" phase often takes longer than the
+        fix itself.
+      </p>
+      <div class="analogy">
+        <span class="label">Think of it like this</span>
+        A car's warning light comes on. The light tells you <em>something</em> is wrong, not
+        <em>what</em>. A mechanic still has to plug in a scanner, read the codes and check
+        recent repairs before touching a single bolt. OpsPilot is that first diagnostic scan,
+        done for you before you even reach the garage.
+      </div>
+      <p>
+        Every minute of an outage costs money: lost sales, refunds, support calls and lost
+        trust. It also costs people: being woken up repeatedly is one of the main reasons
+        engineers burn out and leave.
+      </p>
+
+      <h2 id="what">What OpsPilot is</h2>
+      <p>
+        OpsPilot is an <strong>AI on-call assistant</strong>. When an alarm fires, it starts
+        investigating straight away, by itself. Within about a minute it produces a short report:
+        what is most likely wrong, the evidence for it, how confident it is, and a suggested
+        next step.
+      </p>
+      <p>
+        The person on call wakes up to a written explanation instead of a blank screen. They
+        still make the decision. OpsPilot just does the first round of detective work.
+      </p>
+      <div class="note">
+        <span class="label">The key idea</span>
+        OpsPilot can <strong>look</strong> at everything it needs but cannot
+        <strong>change</strong> anything. It is a detective, not a mechanic. A human always
+        decides what to do.
+      </div>
+
+      <h2 id="how">How it works, in five steps</h2>
+      <ol class="flow">
+        <li><div><strong>The alarm rings.</strong> A monitoring system notices something is off, for example "too many errors in the last few minutes", and tells OpsPilot.</div></li>
+        <li><div><strong>A case file is opened.</strong> OpsPilot writes the alarm down as an "incident" and replies instantly, "got it". If the same alarm rings ten times, it still opens just one case.</div></li>
+        <li><div><strong>The detective gathers clues.</strong> An AI model reads three kinds of evidence, like a doctor reading a patient's chart:
+          <ul>
+            <li><strong>The diary</strong> (logs): a line written for every customer request, saying what happened and whether it worked.</li>
+            <li><strong>The vital signs</strong> (metrics): numbers over time, like error rate, response speed and memory use.</li>
+            <li><strong>The change log</strong> (deploys): which new versions went out recently, and exactly what they changed.</li>
+          </ul></div></li>
+        <li><div><strong>It writes a report with receipts.</strong> Every claim in the report must be backed by a quote copied from a real clue. Before the report is saved, OpsPilot checks each quote against the actual evidence. Anything it can't find is thrown out, and the confidence goes down.</div></li>
+        <li><div><strong>A human decides.</strong> The on-call engineer reads the report and the full list of clues it checked, then acts: undo the release, fix the database, or simply relax because nothing is broken.</div></li>
+      </ol>
+      <p>
+        There are also strict limits on how long the assistant may investigate, how many
+        clues it may request and how much AI text it may use. It can't go round in circles
+        or run up a large bill.
+      </p>
+
+      <h2 id="where-runs">Where it runs</h2>
+      <ul>
+        <li><strong>On a laptop</strong>: the whole system, including a small demo shop that can be broken on purpose, starts with one command. That is how the demos on this site were recorded.</li>
+        <li><strong>In the cloud (AWS)</strong>: the project includes ready-made configuration to run it on Amazon Web Services, connected to Amazon's monitoring alarms.</li>
+        <li><strong>With any AI provider</strong>: it works with several AI services (Google Gemini, Groq, OpenAI, or a model on your own computer). Switching is a settings change.</li>
+      </ul>
+
+      <h2 id="where-helps">Where it helps</h2>
+      <p>Anywhere an online service has to stay up and people are on call for it:</p>
+      <ul>
+        <li><strong>Online shops</strong>: checkout breaks during a sale; every minute is lost revenue.</li>
+        <li><strong>Banking and payments</strong>: failed transfers need a fast, careful explanation, with evidence for auditors.</li>
+        <li><strong>Software companies (SaaS)</strong>: thousands of business customers depend on the app being up.</li>
+        <li><strong>Games and streaming</strong>: huge traffic spikes at launch time.</li>
+        <li><strong>Small teams and start-ups</strong>: no 24/7 operations team, so one developer is on call for everything.</li>
+        <li><strong>Hospitals, logistics, public services</strong>: internal systems where downtime stops real work.</li>
+      </ul>
+
+      <h2 id="why-use">Why use it</h2>
+      <div class="facts-grid">
+        <div><b>30–60 s</b><span>alarm to written report in the demos</span></div>
+        <div><b>4 / 4</b><span>demo incidents diagnosed correctly</span></div>
+        <div><b>0</b><span>permissions to change anything</span></div>
+      </div>
+      <ul>
+        <li><strong>Faster first look.</strong> The slowest part of an outage is often working out what is wrong. OpsPilot does that part before a human has even opened their laptop.</li>
+        <li><strong>Calmer nights.</strong> Waking up to a clear explanation is very different from waking up to a red alert and nothing else.</li>
+        <li><strong>Consistent.</strong> It checks the same clues in a sensible order every time, even at 3 a.m. and even on the hundredth alarm.</li>
+        <li><strong>Honest about doubt.</strong> It states its confidence and shows its evidence, so people know how far to trust it.</li>
+        <li><strong>Safe to try.</strong> Because it can only read, the worst a wrong report can do is waste a few minutes of attention.</li>
+      </ul>
+
+      <h2 id="who">Who it helps</h2>
+      <ul>
+        <li><strong>On-call engineers</strong>: less searching, more fixing, and more sleep.</li>
+        <li><strong>Managers</strong>: shorter outages, fewer escalations, and a written record of every incident.</li>
+        <li><strong>Customers</strong>: things come back faster.</li>
+        <li><strong>The business</strong>: less lost revenue, and less burnout in the team that keeps everything running.</li>
+      </ul>
+
+      <h2 id="not">What it is not</h2>
+      <ul>
+        <li><strong>Not an autopilot.</strong> It never restarts, deletes, rolls back or changes anything. It recommends; people act.</li>
+        <li><strong>Not a replacement for engineers.</strong> It is the junior colleague who has already pulled up the right charts when you arrive.</li>
+        <li><strong>Not magic.</strong> If the clues aren't there (no traffic, no logs), it says "unknown" rather than inventing a cause.</li>
+      </ul>
+      <p>
+        Want to see it in action? The next post walks through
+        <a href="../four-incidents/">four real investigations in plain English</a>, and the
+        third explains <a href="../is-it-safe/">why it is safe</a>.
+      </p>
+    </article>
+
+    <div class="next">
+      <a class="card post-card" href="../four-incidents/"><h3>Next: Four incidents, in plain English</h3><span class="read">Read →</span></a>
+      <a class="card post-card" href="../../#demos"><h3>Watch the replays</h3><span class="read">Go to demos →</span></a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>OpsPilot · built by Giddaluru Damodhar · <a href="https://github.com/damodharg6/opspilot">source</a> · <a href="../">blog</a><span id="build"></span></p>
+  </footer>
+  <script src="../../assets/site.js" defer></script>
+</body>
+</html>

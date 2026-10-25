@@ -63,3 +63,4 @@ npx @modelcontextprotocol/inspector   # connect to http://localhost:8101/mcp (St
 | Worker `Restarting`, log says `OPSPILOT_LLM_API_KEY is not set` | Put a key in `.env` (or use `OPSPILOT_LLM_PROVIDER=ollama`), then `docker compose up -d worker` |
 | `make up` fails in `pip install` with `ReadTimeoutError: files.pythonhosted.org` | Slow network to PyPI during the image build; run `make up` again (the dependency layer is cached once it succeeds) |
 | `make smoke` shows a FAIL row | `docker compose ps` and `docker compose logs <service>` for that row's service |
+| Commands or file reads hang on a Desktop/Documents folder | macOS iCloud is syncing that folder. Keep the Python environment outside it: `uv venv --python 3.12 ~/.venvs/opspilot`, install with `uv pip install --python ~/.venvs/opspilot/bin/python -e ".[dev]"`, then `export PATH="$HOME/.venvs/opspilot/bin:$PATH"` |
