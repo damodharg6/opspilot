@@ -1,0 +1,150 @@
+{
+  "id": "bad_deploy_basic",
+  "title": "Buggy deploy",
+  "tagline": "A release breaks checkout",
+  "story": "Release v1.5.0 changes order pricing. Orders for products without a promotion now fail with a KeyError. Can the agent connect the errors to the commit?",
+  "fault": "buggy_deploy",
+  "params": {},
+  "expected": "bad_deploy",
+  "correct": true,
+  "traffic": {
+    "warmup": {
+      "requests": 724,
+      "status_counts": {
+        "200": 424,
+        "201": 300
+      },
+      "p50_ms": 8.1,
+      "p95_ms": 16.8
+    },
+    "fault": {
+      "requests": 352,
+      "status_counts": {
+        "200": 207,
+        "201": 66,
+        "500": 79
+      },
+      "p50_ms": 8.9,
+      "p95_ms": 20.2
+    }
+  },
+  "timings": {
+    "investigation_s": 34.2,
+    "warmup_s": 120,
+    "fault_s": 60
+  },
+  "incident": {
+    "id": "929f4287-f874-4480-a35d-9ff69296399b",
+    "service": "shop",
+    "alarm_name": "shop-health-degraded",
+    "source": "manual",
+    "status": "done",
+    "attempts": 1,
+    "window_minutes": 2,
+    "created_at": "2026-10-24T15:34:55.150347Z",
+    "finished_at": "2026-10-24T15:35:27.581648Z",
+    "last_error": null,
+    "report": {
+      "result_status": "completed",
+      "category": "bad_deploy",
+      "summary": "Recent release v1.5.0 introduced a bug in order total calculation that causes HTTP 500 errors on POST /orders due to unhandled KeyError exceptions.",
+      "root_cause": "Commit afe23aaa9faab60623ef3abda4532f464bac5d14 changed calculate_total in shop/pricing.py to look up product_id directly in PROMOTION_RATES dictionary without fallback. Since PROMOTION_RATES only contains keys 1 and 3, orders for any other product_id raise a KeyError.",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "tool": "search_logs",
+          "snippet": "\"timestamp\": \"2026-10-24T15:34:54.542+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 11.1,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"4917fbf087294a91\"",
+          "timestamp": "2026-10-24T15:34:54.542+00:00"
+        }
+      ],
+      "suggested_fix": "Roll back release v1.5.0 (commit afe23aaa9faab60623ef3abda4532f464bac5d14) or update shop/pricing.py to safely handle product_ids not present in PROMOTION_RATES using PROMOTION_RATES.get(product_id, 0.0).",
+      "model": "gemini-3.5-flash",
+      "prompt_version": "2026-10-24.1",
+      "stop_reason": "answered",
+      "tool_call_count": 7,
+      "prompt_tokens": 21222,
+      "completion_tokens": 1066,
+      "latency_s": 31.86,
+      "evidence_dropped": 1
+    }
+  },
+  "trace": [
+    {
+      "step": 1,
+      "tool": "count_errors",
+      "arguments": {
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"window_minutes\": 15,\n  \"group_by\": \"path\",\n  \"total\": 79,\n  \"counts\": {\n    \"/orders\": 79\n  }\n}",
+      "is_error": false,
+      "duration_ms": 61.2
+    },
+    {
+      "step": 2,
+      "tool": "recent_commits",
+      "arguments": {
+        "hours": 24
+      },
+      "result_preview": "{\n  \"count\": 2,\n  \"commits\": [\n    {\n      \"sha\": \"afe23aaa9faab60623ef3abda4532f464bac5d14\",\n      \"short_sha\": \"afe23aaa\",\n      \"time\": \"2026-10-24T21:03:54+05:30\",\n      \"author\": \"Release Bot\",\n      \"message\": \"release v1.5.0: apply promotion discounts to order totals\",\n      \"files\": [\n        \"VERSION\",\n        \"shop/pricing.py\"\n      ]\n    },\n    {\n      \"sha\": \"31265572873ff7aedc063864a672c321cf01acd7\",\n      \"short_sha\": \"31265572\",\n      \"time\": \"2026-10-23T19:31:54Z\",\n      \"author\": \"Release Bot\",\n      \"message\": \"release v1.4.0: health check verifies database\",\n      \"files\": [\n        \"VERSION\",\n        \"shop/health.py\"\n      ]\n    }\n  ]\n}",
+      "is_error": false,
+      "duration_ms": 25.0
+    },
+    {
+      "step": 3,
+      "tool": "get_metric",
+      "arguments": {
+        "name": "error_rate_5xx",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"metric\": \"error_rate_5xx\",\n  \"unit\": \"percent of requests returning 5xx\",\n  \"period_s\": 60,\n  \"points\": [\n    {\n      \"timestamp\": \"2026-10-24T15:22:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:23:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:31:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:32:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:33:00+00:00\",\n      \"value\": 2.55\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:00+00:00\",\n      \"value\": 21.47\n    }\n  ],\n  \"summary\": {\n    \"count\": 6,\n    \"min\": 0.0,\n    \"max\": 21.47,\n    \"first\": 0.0,\n    \"latest\": 21.47\n  }\n}",
+      "is_error": false,
+      "duration_ms": 26.1
+    },
+    {
+      "step": 4,
+      "tool": "get_metric",
+      "arguments": {
+        "name": "latency_p95_ms",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"metric\": \"latency_p95_ms\",\n  \"unit\": \"milliseconds (95th percentile per period)\",\n  \"period_s\": 60,\n  \"points\": [\n    {\n      \"timestamp\": \"2026-10-24T15:22:00+00:00\",\n      \"value\": 3.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:23:00+00:00\",\n      \"value\": 3.4\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:31:00+00:00\",\n      \"value\": 14.7\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:32:00+00:00\",\n      \"value\": 10.5\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:33:00+00:00\",\n      \"value\": 10.5\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:00+00:00\",\n      \"value\": 13.6\n    }\n  ],\n  \"summary\": {\n    \"count\": 6,\n    \"min\": 3.0,\n    \"max\": 14.7,\n    \"first\": 3.0,\n    \"latest\": 13.6\n  }\n}",
+      "is_error": false,
+      "duration_ms": 21.6
+    },
+    {
+      "step": 5,
+      "tool": "commit_diff",
+      "arguments": {
+        "sha": "afe23aaa9faab60623ef3abda4532f464bac5d14"
+      },
+      "result_preview": "{\n  \"sha\": \"afe23aaa9faab60623ef3abda4532f464bac5d14\",\n  \"text\": \"commit afe23aaa9faab60623ef3abda4532f464bac5d14\\nAuthor: Release Bot <[REDACTED_EMAIL]>\\nDate:   2026-10-24T21:03:54+05:30\\n\\n    release v1.5.0: apply promotion discounts to order totals\\n---\\n VERSION         | 2 +-\\n shop/pricing.py | 9 +++++++--\\n 2 files changed, 8 insertions(+), 3 deletions(-)\\n\\ndiff --git a/VERSION b/VERSION\\nindex 88c5fb8..bc80560 100644\\n--- a/VERSION\\n+++ b/VERSION\\n@@ -1 +1 @@\\n-1.4.0\\n+1.5.0\\ndiff --git a/shop/pricing.py b/shop/pricing.py\\nindex de2d725..be46b51 100644\\n--- a/shop/pricing.py\\n+++ b/shop/pricing.py\\n@@ -1,2 +1,7 @@\\n-def calculate_total(price, quantity):\\n-    return round(price * quantity, 2)\\n+PROMOTION_RATES = {1: 0.05, 3: 0.10}\\n+\\n+\\n+def calculate_total(product_id, price, quantity):\\n+    discount = PROMOTION_RATES[product_id]\\n+    subtotal = price * quantity\\n+    return round(subtotal - subtotal * discount, 2)\\n\",\n  \"truncated\": false,\n  \"total_chars\": 847\n}",
+      "is_error": false,
+      "duration_ms": 16.9
+    },
+    {
+      "step": 6,
+      "tool": "search_logs",
+      "arguments": {
+        "limit": 10,
+        "query": "path=/orders",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"total_matched\": 446,\n  \"returned\": 10,\n  \"truncated\": true,\n  \"entries\": [\n    {\n      \"timestamp\": \"2026-10-24T15:34:54.542+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 11.1,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"4917fbf087294a91\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:53.891+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 201\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 201,\n      \"latency_ms\": 5.4,\n      \"request_id\": \"2d68a7601e38452f\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:53.690+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 9.3,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"04c43e693af24f48\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.996+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 11.0,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"1860c3dcff384ae9\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.710+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 201\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 201,\n      \"latency_ms\": 5.4,\n      \"request_id\": \"af74297e7893436a\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.675+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 201\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 201,\n      \"latency_ms\": 5.4,\n      \"request_id\": \"7f5ed121dc5a424b\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.404+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 7.1,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"d513cb7029c84917\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.364+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 3.6,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"a7f7a5ac2a144af5\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.358+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 201\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 201,\n      \"latency_ms\": 14.0,\n      \"request_id\": \"e15c71c0e8fb4211\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.183+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 10.3,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"01e65b99d4be4970\"\n    }\n  ]\n}",
+      "is_error": false,
+      "duration_ms": 23.3
+    },
+    {
+      "step": 7,
+      "tool": "search_logs",
+      "arguments": {
+        "limit": 5,
+        "query": "status>=500",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"total_matched\": 79,\n  \"returned\": 5,\n  \"truncated\": true,\n  \"entries\": [\n    {\n      \"timestamp\": \"2026-10-24T15:34:54.542+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 11.1,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"4917fbf087294a91\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:53.690+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 9.3,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"04c43e693af24f48\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.996+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 11.0,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"1860c3dcff384ae9\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.404+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 7.1,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"d513cb7029c84917\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T15:34:52.364+00:00\",\n      \"level\": \"ERROR\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /orders 500\",\n      \"method\": \"POST\",\n      \"path\": \"/orders\",\n      \"status\": 500,\n      \"latency_ms\": 3.6,\n      \"error_type\": \"KeyError\",\n      \"request_id\": \"a7f7a5ac2a144af5\"\n    }\n  ]\n}",
+      "is_error": false,
+      "duration_ms": 32.8
+    }
+  ],
+  "recorded_at": "2026-10-24T15:35:29+00:00"
+}

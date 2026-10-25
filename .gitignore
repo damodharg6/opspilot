@@ -17,3 +17,10 @@ infra/terraform/*.tfstate*
 infra/terraform/*.tfvars
 !infra/terraform/example.tfvars
 infra/lambda/*.zip
+
+# Local assistant notes (rules are published in docs/engineering-rules.md)
+CLAUDE.md
+.claude/
+
+# Local Netlify folder
+.netlify

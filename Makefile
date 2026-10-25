@@ -1,4 +1,4 @@
-.PHONY: install test test-pg test-all lint format up down logs smoke migrate demo-history load evals evals-offline
+.PHONY: install test test-pg test-all lint format up down logs smoke showcase record-demos migrate demo-history load evals evals-offline
 
 PG_TEST_CONTAINER ?= opspilot-test-pg
 PG_TEST_PORT ?= 5435
@@ -46,6 +46,14 @@ logs:
 
 smoke:
 	python -m scripts.smoke
+
+# Showcase site on http://localhost:8090 with live demo runs (needs `make up`)
+showcase:
+	python -m scripts.showcase_server
+
+# Re-record the demos the public site replays (about 15 minutes, needs `make up`)
+record-demos:
+	python -m scripts.record_demos
 
 migrate:
 	docker compose run --rm migrate

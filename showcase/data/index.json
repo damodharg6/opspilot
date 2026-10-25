@@ -1,0 +1,28 @@
+{
+  "demos": [
+    {
+      "id": "bad_deploy_basic",
+      "title": "Buggy deploy",
+      "tagline": "A release breaks checkout",
+      "correct": true
+    },
+    {
+      "id": "db_latency_basic",
+      "title": "Slow database",
+      "tagline": "Everything is slow, nothing is broken",
+      "correct": true
+    },
+    {
+      "id": "business_stock_exhaustion",
+      "title": "Stock exhaustion",
+      "tagline": "Not an outage at all",
+      "correct": true
+    },
+    {
+      "id": "memory_leak_basic",
+      "title": "Memory leak",
+      "tagline": "Requests succeed while memory climbs",
+      "correct": true
+    }
+  ]
+}

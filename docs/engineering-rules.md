@@ -1,4 +1,6 @@
-# OpsPilot
+# Engineering rules
+
+How OpsPilot is built and changed. These apply to every contribution.
 
 An AI on-call agent. When the demo "shop" service breaks, OpsPilot reads logs,
 metrics and recent commits through MCP tools and writes a root-cause report
@@ -14,7 +16,8 @@ with evidence. It never changes infrastructure: it only reads and recommends.
 - evals/         scenarios, eval runner, recorded fixtures for offline replay
 - scripts/       load generator, fault injector, demo deploy history
 - infra/         Terraform + Lambda alarm forwarder
-- docs/          architecture.md, runbook.md, decisions.md (written by the developer)
+- docs/          architecture.md, runbook.md, decisions.md, engineering-rules.md
+- showcase/      static showcase site (Netlify) + recorded demo runs
 
 ## Stack
 Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2, Postgres 16, Alembic, Docker Compose,
@@ -26,6 +29,8 @@ Ollama), boto3, pytest, ruff, Terraform, GitHub Actions.
 - Tests:   make test            (Postgres tests need TEST_DATABASE_URL)
 - Lint:    make lint
 - Run:     make up              (docker compose)
+- Smoke:   make smoke
+- Demos:   make showcase        (site + live runs)  ·  make record-demos
 
 ## Engineering rules
 - Plan first. Wait for approval before editing files.
@@ -46,8 +51,7 @@ Ollama), boto3, pytest, ruff, Terraform, GitHub Actions.
    If either fails, fix it; never commit red.
 3. Commit with a Conventional Commits message (`feat:`, `fix:`, `docs:`, `test:`,
    `chore:`, `refactor:`), a summary under 72 chars and 2-4 bullets on what and why.
-4. Never add Co-Authored-By, "Generated with" or any AI attribution lines to commits
-   or pull requests.
+4. Commits and pull requests carry only the author; no co-author or tool attribution lines.
 5. `git push origin main`, then confirm with `git status -sb` that main is in sync.
 6. Never force-push, never rewrite history, never commit .env or secrets.
 

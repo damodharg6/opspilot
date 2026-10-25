@@ -7,7 +7,32 @@ It never changes anything: it investigates and recommends, and a human acts.
 
 ![CI](https://github.com/damodharg6/opspilot/actions/workflows/ci.yml/badge.svg)
 
-> Demo video: _coming soon_
+**Showcase:** [opspilot-showcase.netlify.app](https://opspilot-showcase.netlify.app): watch
+four real investigations replay step by step (buggy deploy, slow database, stock
+exhaustion, memory leak), plus the architecture and the AI roadmap.
+
+## Showcase
+
+The site in [`showcase/`](showcase/) is static and hosted on Netlify (config and security
+headers in [netlify.toml](netlify.toml)). The demos it replays are recordings of real runs
+of the full stack (API, queue, workers, MCP servers, LLM), captured by `make record-demos`.
+
+```bash
+make up && make showcase        # http://localhost:8090, with a "Run live" button per demo
+make record-demos               # refresh the recordings after a prompt or model change
+```
+
+Run locally, the site gets a **Run live** button: it stages the incident on your machine
+(healthy traffic, fault on, alarm) and streams the investigation into the page. The
+browser never sees the API secret; [scripts/showcase_server.py](scripts/showcase_server.py)
+holds it and only listens on `127.0.0.1`.
+
+Deploy (Netlify free tier): preview first, then production.
+
+```bash
+npx netlify-cli deploy --dir showcase --no-build          # draft URL to check
+npx netlify-cli deploy --dir showcase --no-build --prod   # opspilot-showcase.netlify.app
+```
 
 ## How it works
 
@@ -86,6 +111,7 @@ forwarder, SSM secrets, budget alerts and a GitHub OIDC deploy role:
 - [docs/architecture.md](docs/architecture.md): components, incident lifecycle, design
   decisions and trade-offs, failure modes, scaling path, AI roadmap, security model
 - [docs/decisions.md](docs/decisions.md): my own notes on each decision
+- [docs/engineering-rules.md](docs/engineering-rules.md): how the project is built and changed
 
 Highlights:
 - **Async API + Postgres job queue** with dedup (partial unique index), `SKIP LOCKED`
@@ -107,7 +133,9 @@ opspilot/      llm/ (providers), agent/ (loop, prompts, report, grounding),
                api/ (incidents API), worker/ (queue consumer), db/ (models, queue)
 migrations/    Alembic
 evals/         scenarios, runner (live + offline replay), scoring
-scripts/       load generator, fault injector, simulated deploy history
+scripts/       load generator, fault injector, simulated deploy history, smoke check,
+               demo recorder and showcase server
+showcase/      static showcase site (Netlify) + recorded demo runs in data/
 infra/         Terraform, Lambda alarm forwarder
 ```
 

@@ -1,0 +1,141 @@
+{
+  "id": "memory_leak_basic",
+  "title": "Memory leak",
+  "tagline": "Requests succeed while memory climbs",
+  "story": "Each request leaks memory. Nothing fails yet. The only signal is resident memory rising in the service's runtime stats.",
+  "fault": "memory_leak",
+  "params": {
+    "kb_per_request": 2048,
+    "max_mb": 700
+  },
+  "expected": "memory",
+  "correct": true,
+  "traffic": {
+    "warmup": {
+      "requests": 706,
+      "status_counts": {
+        "200": 431,
+        "201": 275
+      },
+      "p50_ms": 9.5,
+      "p95_ms": 18.2
+    },
+    "fault": {
+      "requests": 544,
+      "status_counts": {
+        "200": 338,
+        "201": 206
+      },
+      "p50_ms": 11.7,
+      "p95_ms": 19.4
+    }
+  },
+  "timings": {
+    "investigation_s": 48.3,
+    "warmup_s": 120,
+    "fault_s": 90
+  },
+  "incident": {
+    "id": "51fb6b85-215c-45b8-b46e-ce332d1e3e69",
+    "service": "shop",
+    "alarm_name": "shop-health-degraded",
+    "source": "manual",
+    "status": "done",
+    "attempts": 1,
+    "window_minutes": 2,
+    "created_at": "2026-10-24T16:41:26.506978Z",
+    "finished_at": "2026-10-24T16:42:13.880560Z",
+    "last_error": null,
+    "report": {
+      "result_status": "completed",
+      "category": "memory",
+      "summary": "The shop service memory usage is growing abnormally due to an explicitly enabled memory leak fault in the staged demo.",
+      "root_cause": "A memory leak fault was enabled via the admin faults endpoint, causing resident memory usage to climb rapidly.",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "tool": "search_logs",
+          "snippet": "fault enabled: memory_leak",
+          "timestamp": "2026-10-24T16:39:56.425+00:00"
+        }
+      ],
+      "suggested_fix": "Disable the memory leak fault via the admin endpoint (DELETE /admin/faults/memory_leak) or restart the service.",
+      "model": "gemini-3.5-flash-lite",
+      "prompt_version": "2026-10-24.1",
+      "stop_reason": "answered",
+      "tool_call_count": 6,
+      "prompt_tokens": 24036,
+      "completion_tokens": 392,
+      "latency_s": 46.39,
+      "evidence_dropped": 1
+    }
+  },
+  "trace": [
+    {
+      "step": 1,
+      "tool": "count_errors",
+      "arguments": {
+        "minutes": 5
+      },
+      "result_preview": "{\n  \"window_minutes\": 5,\n  \"group_by\": \"path\",\n  \"total\": 0,\n  \"counts\": {}\n}",
+      "is_error": false,
+      "duration_ms": 68.3
+    },
+    {
+      "step": 2,
+      "tool": "get_metric",
+      "arguments": {
+        "name": "error_rate_5xx",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"metric\": \"error_rate_5xx\",\n  \"unit\": \"percent of requests returning 5xx\",\n  \"period_s\": 60,\n  \"points\": [\n    {\n      \"timestamp\": \"2026-10-24T16:26:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:27:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:28:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:29:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:30:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:32:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:33:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:34:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:35:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:37:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:38:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:39:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:40:00+00:00\",\n      \"value\": 0.0\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:41:00+00:00\",\n      \"value\": 0.0\n    }\n  ],\n  \"summary\": {\n    \"count\": 16,\n    \"min\": 0.0,\n    \"max\": 0.0,\n    \"first\": 0.0,\n    \"latest\": 0.0\n  }\n}",
+      "is_error": false,
+      "duration_ms": 45.3
+    },
+    {
+      "step": 3,
+      "tool": "get_metric",
+      "arguments": {
+        "name": "latency_p95_ms",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"metric\": \"latency_p95_ms\",\n  \"unit\": \"milliseconds (95th percentile per period)\",\n  \"period_s\": 60,\n  \"points\": [\n    {\n      \"timestamp\": \"2026-10-24T16:26:00+00:00\",\n      \"value\": 1.5\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:27:00+00:00\",\n      \"value\": 4.5\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:28:00+00:00\",\n      \"value\": 10.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:29:00+00:00\",\n      \"value\": 11.1\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:30:00+00:00\",\n      \"value\": 1221.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:00+00:00\",\n      \"value\": 1221.1\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:32:00+00:00\",\n      \"value\": 12.4\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:33:00+00:00\",\n      \"value\": 10.1\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:34:00+00:00\",\n      \"value\": 10.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:35:00+00:00\",\n      \"value\": 10.2\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:00+00:00\",\n      \"value\": 3.5\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:37:00+00:00\",\n      \"value\": 22.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:38:00+00:00\",\n      \"value\": 11.1\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:39:00+00:00\",\n      \"value\": 11.9\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:40:00+00:00\",\n      \"value\": 13.4\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:41:00+00:00\",\n      \"value\": 12.4\n    }\n  ],\n  \"summary\": {\n    \"count\": 16,\n    \"min\": 1.5,\n    \"max\": 1221.3,\n    \"first\": 1.5,\n    \"latest\": 12.4\n  }\n}",
+      "is_error": false,
+      "duration_ms": 45.8
+    },
+    {
+      "step": 4,
+      "tool": "get_metric",
+      "arguments": {
+        "name": "memory_mb",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"metric\": \"memory_mb\",\n  \"unit\": \"resident memory of the shop process in MB (max per period)\",\n  \"period_s\": 60,\n  \"points\": [\n    {\n      \"timestamp\": \"2026-10-24T16:26:00+00:00\",\n      \"value\": 87.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:27:00+00:00\",\n      \"value\": 87.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:28:00+00:00\",\n      \"value\": 87.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:29:00+00:00\",\n      \"value\": 87.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:30:00+00:00\",\n      \"value\": 88.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:00+00:00\",\n      \"value\": 88.6\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:32:00+00:00\",\n      \"value\": 88.2\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:33:00+00:00\",\n      \"value\": 88.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:34:00+00:00\",\n      \"value\": 88.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:35:00+00:00\",\n      \"value\": 88.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:00+00:00\",\n      \"value\": 88.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:37:00+00:00\",\n      \"value\": 89.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:38:00+00:00\",\n      \"value\": 89.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:39:00+00:00\",\n      \"value\": 89.3\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:40:00+00:00\",\n      \"value\": 763.2\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:41:00+00:00\",\n      \"value\": 789.2\n    }\n  ],\n  \"summary\": {\n    \"count\": 16,\n    \"min\": 87.6,\n    \"max\": 789.2,\n    \"first\": 87.6,\n    \"latest\": 789.2\n  }\n}",
+      "is_error": false,
+      "duration_ms": 47.9
+    },
+    {
+      "step": 5,
+      "tool": "search_logs",
+      "arguments": {
+        "query": "memory",
+        "minutes": 5
+      },
+      "result_preview": "{\n  \"total_matched\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"entries\": [\n    {\n      \"timestamp\": \"2026-10-24T16:39:56.425+00:00\",\n      \"level\": \"WARNING\",\n      \"service\": \"shop\",\n      \"event\": \"fault_enabled\",\n      \"message\": \"fault enabled: memory_leak\",\n      \"request_id\": \"5e0ad4f315c3417b\"\n    }\n  ]\n}",
+      "is_error": false,
+      "duration_ms": 47.2
+    },
+    {
+      "step": 6,
+      "tool": "search_logs",
+      "arguments": {
+        "query": "fault",
+        "minutes": 15
+      },
+      "result_preview": "{\n  \"total_matched\": 15,\n  \"returned\": 15,\n  \"truncated\": false,\n  \"entries\": [\n    {\n      \"timestamp\": \"2026-10-24T16:39:56.426+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /admin/faults/{name} 200\",\n      \"method\": \"POST\",\n      \"path\": \"/admin/faults/{name}\",\n      \"status\": 200,\n      \"latency_ms\": 0.9,\n      \"request_id\": \"5e0ad4f315c3417b\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:39:56.425+00:00\",\n      \"level\": \"WARNING\",\n      \"service\": \"shop\",\n      \"event\": \"fault_enabled\",\n      \"message\": \"fault enabled: memory_leak\",\n      \"request_id\": \"5e0ad4f315c3417b\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:37:55.950+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"GET /admin/faults 200\",\n      \"method\": \"GET\",\n      \"path\": \"/admin/faults\",\n      \"status\": 200,\n      \"latency_ms\": 1.3,\n      \"request_id\": \"dfe771db04d64466\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:55.920+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"DELETE /admin/faults/{name} 200\",\n      \"method\": \"DELETE\",\n      \"path\": \"/admin/faults/{name}\",\n      \"status\": 200,\n      \"latency_ms\": 3.5,\n      \"request_id\": \"1794c580d526498b\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:55.919+00:00\",\n      \"level\": \"WARNING\",\n      \"service\": \"shop\",\n      \"event\": \"fault_disabled\",\n      \"message\": \"fault disabled: stock_exhaustion\",\n      \"request_id\": \"1794c580d526498b\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:36:55.910+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"GET /admin/faults 200\",\n      \"method\": \"GET\",\n      \"path\": \"/admin/faults\",\n      \"status\": 200,\n      \"latency_ms\": 2.0,\n      \"request_id\": \"705c173824f84f32\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:34:51.366+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /admin/faults/{name} 200\",\n      \"method\": \"POST\",\n      \"path\": \"/admin/faults/{name}\",\n      \"status\": 200,\n      \"latency_ms\": 7.1,\n      \"request_id\": \"73b889597ec540e4\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:34:51.365+00:00\",\n      \"level\": \"WARNING\",\n      \"service\": \"shop\",\n      \"event\": \"fault_enabled\",\n      \"message\": \"fault enabled: stock_exhaustion\",\n      \"request_id\": \"73b889597ec540e4\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:32:50.928+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"GET /admin/faults 200\",\n      \"method\": \"GET\",\n      \"path\": \"/admin/faults\",\n      \"status\": 200,\n      \"latency_ms\": 1.5,\n      \"request_id\": \"e1416a086ac94a2a\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:50.902+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"DELETE /admin/faults/{name} 200\",\n      \"method\": \"DELETE\",\n      \"path\": \"/admin/faults/{name}\",\n      \"status\": 200,\n      \"latency_ms\": 1.2,\n      \"request_id\": \"e86317ce43fc421f\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:50.901+00:00\",\n      \"level\": \"WARNING\",\n      \"service\": \"shop\",\n      \"event\": \"fault_disabled\",\n      \"message\": \"fault disabled: slow_db\",\n      \"request_id\": \"e86317ce43fc421f\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:31:50.894+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"GET /admin/faults 200\",\n      \"method\": \"GET\",\n      \"path\": \"/admin/faults\",\n      \"status\": 200,\n      \"latency_ms\": 1.6,\n      \"request_id\": \"54b03b0ed3c54638\"\n    },\n    {\n      \"timestamp\": \"2026-10-24T16:30:13.464+00:00\",\n      \"level\": \"INFO\",\n      \"service\": \"shop\",\n      \"event\": \"http_request\",\n      \"message\": \"POST /admin/faults/{name} 200\",\n      \"method\": \"POST\",\n      \"path\": \"/admin/faults/{name}\",\n      \"status\": 200,\n      \"latency_ms\": 2.4,\n      \"",
+      "is_error": false,
+      "duration_ms": 45.0
+    }
+  ],
+  "recorded_at": "2026-10-24T16:42:14+00:00"
+}

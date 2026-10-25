@@ -1,0 +1,19 @@
+# Netlify: publishes the static showcase site (no build step).
+# Deploy: `netlify deploy --dir showcase` (draft) then `--prod`, or connect the repo in Netlify.
+
+[build]
+  publish = "showcase"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

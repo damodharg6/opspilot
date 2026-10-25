@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpsPilot · AI on-call agent</title>
+  <meta name="description" content="OpsPilot investigates production incidents: it reads logs, metrics and deploys through read-only MCP tools and writes a root-cause report grounded in real evidence.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip" href="#demos">Skip to the demos</a>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="OpsPilot home">
+      <span class="brand-mark" aria-hidden="true"></span>OpsPilot
+    </a>
+    <nav aria-label="Sections">
+      <a href="#demos">Demos</a>
+      <a href="#how">How it works</a>
+      <a href="#engineering">Engineering</a>
+      <a href="#roadmap">AI roadmap</a>
+      <a href="#run">Run it</a>
+    </nav>
+    <a class="gh" href="https://github.com/damodharg6/opspilot">GitHub</a>
+  </header>
+
+  <main id="top">
+    <!-- hero ------------------------------------------------------------------------>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>PAGER · shop-health-degraded · 03:12</p>
+        <h1>The first engineer on the incident is an&nbsp;agent.</h1>
+        <p class="lede">
+          When an alarm fires, OpsPilot reads logs, metrics and recent deploys through
+          read-only tools, then writes a root-cause report where every piece of evidence is
+          copied from real tool output. It never changes production. A human acts.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="#demos">Watch 4 real investigations</a>
+          <a class="btn" href="#how">See the architecture</a>
+        </div>
+        <ul class="facts" aria-label="Key facts">
+          <li><strong>~20 s</strong> alarm to report</li>
+          <li><strong>0</strong> write permissions</li>
+          <li><strong>100%</strong> evidence grounded</li>
+        </ul>
+      </div>
+      <div class="hero-console" aria-hidden="true">
+        <div class="console-bar"><span></span><span></span><span></span>incident · live</div>
+        <pre id="hero-ticker" class="console-body"></pre>
+      </div>
+    </section>
+
+    <!-- demos ------------------------------------------------------------------------->
+    <section id="demos" class="section">
+      <div class="section-head">
+        <p class="kicker">Demos</p>
+        <h2>Four staged incidents. Real tools, real model, real reports.</h2>
+        <p class="sub">
+          Each run: healthy traffic, then a fault is switched on in the demo shop, an alarm
+          raises an incident, and a worker investigates. These are recordings of actual runs
+          on the full stack, replayed step by step.
+          <span id="live-note" class="live-note" hidden>Live mode is on: you can run any of these for real.</span>
+        </p>
+      </div>
+
+      <div class="demo-layout">
+        <div class="demo-list" role="tablist" aria-label="Demo scenarios" id="demo-list"></div>
+
+        <article class="player" id="player" aria-live="polite">
+          <header class="player-head">
+            <div>
+              <p class="player-tag" id="p-tag"></p>
+              <h3 id="p-title">Loading demos…</h3>
+              <p class="player-story" id="p-story"></p>
+            </div>
+            <div class="controls">
+              <button class="btn primary" id="btn-play" type="button" disabled>Replay</button>
+              <button class="btn" id="btn-skip" type="button" disabled>Show all</button>
+              <button class="btn live" id="btn-live" type="button" hidden>Run live</button>
+            </div>
+          </header>
+
+          <ol class="rail" id="rail" aria-label="Incident phases">
+            <li data-phase="reset">Reset</li>
+            <li data-phase="warmup">Healthy traffic</li>
+            <li data-phase="fault">Fault on</li>
+            <li data-phase="alarm">Alarm</li>
+            <li data-phase="investigating">Investigate</li>
+            <li data-phase="done">Report</li>
+          </ol>
+
+          <div class="live-log" id="live-log" hidden></div>
+
+          <div class="panels">
+            <section class="panel traffic" aria-labelledby="t-head">
+              <h4 id="t-head">Traffic seen by the shop</h4>
+              <div id="traffic"></div>
+            </section>
+            <section class="panel" aria-labelledby="tr-head">
+              <h4 id="tr-head">Investigation trace <span class="muted" id="trace-meta"></span></h4>
+              <ol class="trace" id="trace"></ol>
+            </section>
+          </div>
+
+          <section class="report" id="report" hidden aria-labelledby="r-head">
+            <h4 id="r-head" class="sr-only">Root-cause report</h4>
+          </section>
+        </article>
+      </div>
+    </section>
+
+    <!-- architecture ------------------------------------------------------------------->
+    <section id="how" class="section">
+      <div class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>From alarm to stored report</h2>
+        <p class="sub">Stateless services around one Postgres. Every box scales out on its own.</p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 960 360" role="img" aria-labelledby="arch-title arch-desc">
+          <title id="arch-title">OpsPilot architecture</title>
+          <desc id="arch-desc">An alarm posts to the incidents API, which queues the incident in Postgres. Workers claim incidents with SKIP LOCKED, call read-only MCP servers for logs, metrics and git history, talk to an LLM, and store a grounded report.</desc>
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="arrowhead"/>
+            </marker>
+          </defs>
+          <g class="node alarm"><rect x="16" y="40" width="186" height="64" rx="10"/><text x="109" y="68">Alarm</text><text x="109" y="88" class="small">CloudWatch · SNS · Lambda</text></g>
+          <g class="node"><rect x="238" y="40" width="180" height="64" rx="10"/><text x="328" y="68">Incidents API</text><text x="328" y="88" class="small">202 + enqueue · dedup</text></g>
+          <g class="node db"><rect x="458" y="30" width="216" height="84" rx="10"/><text x="566" y="62">Postgres</text><text x="566" y="82" class="small">job queue · reports · traces</text><text x="566" y="100" class="small">SKIP LOCKED · leases</text></g>
+          <g class="node"><rect x="458" y="200" width="216" height="72" rx="10"/><text x="566" y="230">Workers × N</text><text x="566" y="250" class="small">budgeted agent loop</text></g>
+          <g class="node llm"><rect x="738" y="200" width="206" height="72" rx="10"/><text x="841" y="230">LLM</text><text x="841" y="250" class="small">any OpenAI-compatible API</text></g>
+          <g class="node mcp"><rect x="96" y="190" width="300" height="140" rx="10"/><text x="246" y="216">MCP servers (read-only)</text>
+            <rect x="112" y="230" width="268" height="24" rx="5" class="chip"/><text x="246" y="246" class="small">logs · search_logs, count_errors</text>
+            <rect x="112" y="260" width="268" height="24" rx="5" class="chip"/><text x="246" y="276" class="small">metrics · get_metric</text>
+            <rect x="112" y="290" width="268" height="24" rx="5" class="chip"/><text x="246" y="306" class="small">git · recent_commits, commit_diff</text></g>
+          <g class="node grounding"><rect x="738" y="40" width="206" height="64" rx="10"/><text x="841" y="68">Grounding check</text><text x="841" y="88" class="small">drop unproven evidence</text></g>
+          <path d="M202 72 H238" class="edge" marker-end="url(#arr)"/>
+          <path d="M418 72 H458" class="edge" marker-end="url(#arr)"/>
+          <path d="M566 114 V200" class="edge" marker-end="url(#arr)" marker-start="url(#arr)"/>
+          <path d="M458 236 H396" class="edge" marker-end="url(#arr)" marker-start="url(#arr)"/>
+          <path d="M674 236 H738" class="edge" marker-end="url(#arr)" marker-start="url(#arr)"/>
+          <path d="M630 200 L770 104" class="edge" marker-end="url(#arr)"/>
+          <path d="M738 72 H674" class="edge" marker-end="url(#arr)"/>
+          <text x="438" y="62" class="edge-label">POST</text>
+          <text x="590" y="160" class="edge-label">claim</text>
+          <text x="706" y="226" class="edge-label">tools</text>
+          <text x="722" y="150" class="edge-label">report</text>
+        </svg>
+      </figure>
+      <ol class="steps">
+        <li><span>1</span><div><strong>Alarm in.</strong> The API checks a shared secret, inserts the incident with <code>ON CONFLICT DO NOTHING</code> (one open incident per alarm) and answers <code>202</code> immediately.</div></li>
+        <li><span>2</span><div><strong>Claim.</strong> Any worker takes the oldest job with <code>FOR UPDATE SKIP LOCKED</code> and a lease. Workers never block each other or take the same job.</div></li>
+        <li><span>3</span><div><strong>Investigate.</strong> The model calls read-only tools inside hard budgets for tool calls, tokens and wall-clock time. Tool output is wrapped as untrusted data.</div></li>
+        <li><span>4</span><div><strong>Ground.</strong> Every evidence snippet must appear in real tool output; anything else is dropped and confidence goes down.</div></li>
+        <li><span>5</span><div><strong>Store.</strong> The report is written only if this worker still holds the lease (fencing), so a slow, expired worker can't overwrite a newer attempt.</div></li>
+      </ol>
+    </section>
+
+    <!-- engineering --------------------------------------------------------------------->
+    <section id="engineering" class="section">
+      <div class="section-head">
+        <p class="kicker">Engineering</p>
+        <h2>Built like production, not like a notebook</h2>
+      </div>
+      <div class="cards">
+        <article class="card"><h3>Postgres as the queue</h3><p>Async API + <code>SKIP LOCKED</code> claims, leases, fencing and retries with backoff. One fewer system to run; swapping to SQS touches one file.</p><a href="https://github.com/damodharg6/opspilot/blob/main/opspilot/db/queue.py">opspilot/db/queue.py</a></article>
+        <article class="card"><h3>Budgets in code</h3><p>Tool calls, tokens and time are enforced by the loop, not requested in a prompt. When a budget runs out the model must answer with what it has.</p><a href="https://github.com/damodharg6/opspilot/blob/main/opspilot/agent/investigator.py">opspilot/agent/investigator.py</a></article>
+        <article class="card"><h3>Grounding check</h3><p>Hallucinated evidence is the worst failure for an on-call tool. Snippets not found in tool output are removed before the report is saved.</p><a href="https://github.com/damodharg6/opspilot/blob/main/opspilot/agent/grounding.py">opspilot/agent/grounding.py</a></article>
+        <article class="card"><h3>Read-only MCP tools</h3><p>Whitelisted query language, schema-validated inputs, capped output, secret redaction. Stateless streamable HTTP, local or AWS backends.</p><a href="https://github.com/damodharg6/opspilot/tree/main/mcp_servers">mcp_servers/</a></article>
+        <article class="card"><h3>Any LLM</h3><p>One provider layer for OpenAI-compatible APIs, with its own retry policy and token accounting. Switching model is a config change.</p><a href="https://github.com/damodharg6/opspilot/tree/main/opspilot/llm">opspilot/llm/</a></article>
+        <article class="card"><h3>Evals gate CI</h3><p>Eight staged scenarios with ground truth. Live runs record fixtures; CI replays them offline and fails if accuracy drops.</p><a href="https://github.com/damodharg6/opspilot/tree/main/evals">evals/</a></article>
+      </div>
+    </section>
+
+    <!-- AI roadmap ---------------------------------------------------------------------->
+    <section id="roadmap" class="section">
+      <div class="section-head">
+        <p class="kicker">AI roadmap · system design</p>
+        <h2>Where AI plugs in next, without a rewrite</h2>
+        <p class="sub">Each step adds a component behind an interface that already exists: the provider layer, the MCP tool gateway, or the Postgres store.</p>
+      </div>
+      <div class="roadmap">
+        <div class="lane">
+          <h3><span class="badge now">Now</span>Investigate</h3>
+          <ul>
+            <li><strong>Agent loop</strong> with budgets and grounding</li>
+            <li><strong>3 MCP servers</strong>: logs, metrics, deploys</li>
+            <li><strong>Offline eval gate</strong> in CI</li>
+          </ul>
+        </div>
+        <div class="lane">
+          <h3><span class="badge next">Next</span>Remember &amp; route</h3>
+          <ul>
+            <li><strong>Model routing</strong>: small fast model first, escalate on low confidence <em>(provider layer)</em></li>
+            <li><strong>Incident memory</strong>: past reports as embeddings in pgvector, a <code>similar_incidents</code> tool <em>(same Postgres)</em></li>
+            <li><strong>Runbook retrieval</strong>: an MCP server over the team's runbooks <em>(tool gateway)</em></li>
+          </ul>
+        </div>
+        <div class="lane">
+          <h3><span class="badge later">Later</span>Act &amp; observe</h3>
+          <ul>
+            <li><strong>Human-approved actions</strong>: rollback or restart proposed in Slack; the agent stays read-only</li>
+            <li><strong>Agent observability</strong>: OpenTelemetry spans per tool and model call; cost and accuracy dashboards</li>
+            <li><strong>Continuous evaluation</strong>: every prompt or model change runs the live suite</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="diagram small-diagram">
+        <svg viewBox="0 0 960 220" role="img" aria-labelledby="fut-title">
+          <title id="fut-title">Future AI components around the current core</title>
+          <g class="node"><rect x="350" y="70" width="260" height="80" rx="10"/><text x="480" y="104">OpsPilot core</text><text x="480" y="124" class="small">workers · provider layer · gateway</text></g>
+          <g class="node future"><rect x="40" y="20" width="230" height="56" rx="10"/><text x="155" y="44">Model router</text><text x="155" y="62" class="small">cheap first, escalate on doubt</text></g>
+          <g class="node future"><rect x="40" y="144" width="230" height="56" rx="10"/><text x="155" y="168">Incident memory</text><text x="155" y="186" class="small">pgvector · similar_incidents</text></g>
+          <g class="node future"><rect x="690" y="20" width="230" height="56" rx="10"/><text x="805" y="44">Runbook MCP server</text><text x="805" y="62" class="small">fixes cite team procedures</text></g>
+          <g class="node future"><rect x="690" y="144" width="230" height="56" rx="10"/><text x="805" y="168">Approval workflow</text><text x="805" y="186" class="small">Slack · human-in-the-loop</text></g>
+          <path d="M270 48 L350 90" class="edge dashed"/><path d="M270 172 L350 130" class="edge dashed"/>
+          <path d="M690 48 L610 90" class="edge dashed"/><path d="M690 172 L610 130" class="edge dashed"/>
+        </svg>
+      </figure>
+    </section>
+
+    <!-- run it --------------------------------------------------------------------------->
+    <section id="run" class="section">
+      <div class="section-head">
+        <p class="kicker">Run it</p>
+        <h2>Five commands to a live demo</h2>
+      </div>
+      <div class="run-grid">
+        <pre class="code"><code><span class="c"># clone, configure an LLM key (Groq/Gemini free tiers work)</span>
+git clone https://github.com/damodharg6/opspilot && cd opspilot
+cp .env.example .env
+make install
+make demo-history &amp;&amp; make up      <span class="c"># db, shop, 3 MCP servers, api, workers</span>
+make showcase                      <span class="c"># this site + live runs on :8090</span></code></pre>
+        <div class="run-notes">
+          <p><strong>Live mode.</strong> Opened from <code>make showcase</code>, every demo gets a <em>Run live</em> button that stages the incident on your machine and streams the investigation here.</p>
+          <p><strong>Refresh the recordings</strong> after a prompt or model change with <code>make record-demos</code>.</p>
+          <p><strong>Deploy.</strong> This page is static and hosted on Netlify; the stack deploys to AWS with the Terraform in <code>infra/</code>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>OpsPilot · built by Giddaluru Damodhar · <a href="https://github.com/damodharg6/opspilot">source</a> · <a href="https://github.com/damodharg6/opspilot/blob/main/docs/architecture.md">architecture</a></p>
+  </footer>
+
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
