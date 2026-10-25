@@ -237,6 +237,9 @@ async function replay(record) {
 async function select(id) {
   state.token++;
   document.querySelectorAll(".demo-tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.id === id)));
+  // Until the new demo has loaded, the buttons would act on the previous one.
+  $("#btn-play").disabled = true;
+  $("#btn-skip").disabled = true;
   const record = await loadDemo(id);
   state.current = record;
   resetPlayer(record);
